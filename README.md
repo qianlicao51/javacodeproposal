@@ -91,6 +91,162 @@ interface Const {
 
 ### 建议6：覆写变长方法也循规蹈矩
 
+```java
+public class Client06 {
+	public static void main(String[] args) {
+		//向上转型
+		Base base = new Sub();
+		base.fun(100, 50);
+		
+		//不转型
+		Sub sub = new Sub();
+		/*
+		 * 此处报错
+		 * 
+		 * */
+		sub.fun(100, 50);
+	}
+}
+
+class Base {
+	void fun(int price, int... discounts) {
+		System.out.println("Base.fun()");
+	}
+}
+class Sub extends Base {
+	@Override
+	void fun(int price, int[] discounts) {
+		System.out.println("Sub.fun()");
+	}
+}
+```
+
+> ​	base对象十把子类对象Sub做了向上转，形参列表是由父类决定的，由于是变长参数，在编译
+>
+> 时，base.fun(100,50)中 50 会被编译器猜测而编译为{50} 数组，再由子类Sub执行。
+>
+> ​	子类直接调用时，编译器不会吧50 做类型转换，因为数组本身也是一个对象，编译器不会爱两个没有继承关系之间的类做转换，类型不匹配自然拒绝执行，给与错误。
+
+### 建议7 警惕自增的陷阱
+
+```java
+	public static void main(String[] args) {
+		int count = 0;
+
+		for (int i = 0; i < 10; i++) {
+			count = count++;
+		}
+		System.out.println("count =" + count);
+	}
+	// 结果是 0
+//count++ 的返回值是自加之前的值，修改为  count++ 及是自增
+//C++中的count=count++ 与count++是等价的
+
+
+```
+
+### 建议8：不要让旧语法困扰你
+
+###  建议9：少用静态导入 
+
+> 对与静态导入，一般遵循2个规则。
+>
+> 1 不要使用* 通配符，除非是静态导入常量类
+>
+> 2 方法名具有明确、清晰 表象意义的工具
+
+### 建议10 不要在本类覆盖静态导入的变量和方法
+
+### 建议11：养成良好习惯，显示声明UID
+
+> 类实现Serializable接口是为了可持久化，比如网络传输或者本地存储，为系统的分布和异构部署提供了先决条件，若没有序列化，我们熟悉的远程调用、对象数据库都可能不存在、
+>
+> serialVersionUID
+
+### 建议12 避免序列化类在构造函数中为不变量赋值
+
+> 反序列化时 ，构造函数不会执行。
+>
+> 在序列化类中，不要使用构造函数为final变量赋值
+
+### 建议13 避免为final变量复杂赋值
+
+### 建议14 使用序列化类的私有方法巧妙解决部分属性持久化问题
+
+### 建议15 break万万不可忘
+
+case 语句后面随手写上break，养成良好的习惯
+
+> Performaces→Java→Compiler→Errors/Warnings→Potential Programming
+> problems，然后修改'switch' case fall-through为Errors级别，如果你胆敢不
+> 在case语句中加入break，那Eclipse直接就报个红叉给你看，这样就可以
+> 完全避免该问题的发生了。
+
+
+
+
+
+### 建议16 易变业务使用脚本语言编写
+
+
+
+
+
+### 建议17 慎用动态编译
+
+
+
+### 建议18 避免instanceof非预期结果
+
+
+
+### 建议19 断言绝对不是鸡肋
+
+
+
+### 建议20 不要只替换一个类
+
+> 发布应用系统时禁止使用类文件替换方式。整体WAR包发布才是万全之策
+
+
+
+
+
+## 第2章 基本类型
+
+
+
+### 建议21 用偶判断，不用奇判断
+
+```java
+	public static void main(String[] args) {
+		System.out.println(remainder(5, 2));// 1
+		System.out.println(remainder(4, 2));// 0
+		System.out.println(remainder(-1, 2));// -1
+	}
+
+	//模拟取余计算，
+	static int remainder(int dividend, int divisor) {
+		return dividend - dividend / divisor * divisor;
+	}
+
+计算-1 时，得到的结果是不是1 ，按照用奇判断 则就是偶数了，显然不对.
+```
+
+
+
+
+
+### 建议22 用整数类型处理货币
+
+```java
+	public static void main(String[] args) {
+		//0.40000000000000036
+		System.out.println(10.00 - 9.60);
+	}
+
+```
+
 
 
 

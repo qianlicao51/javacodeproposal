@@ -658,6 +658,7 @@ public static <T> T[] expandCapactiy(T[] datas, int newLen) {
  	 return new ArrayList<>(a);
  }
 
+
 ```
 
 
@@ -667,4 +668,5 @@ public static <T> T[] expandCapactiy(T[] datas, int newLen) {
 ### 建议67 不同的列表选择不同的遍历方法
 
 > ArrayList 遍历时采用下标方式会提升性能
+```
 

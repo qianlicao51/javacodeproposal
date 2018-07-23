@@ -64,7 +64,7 @@ interface Const {
 > 	若两个操作数不可转换，则不做转换，返回值为Object类型。
 > 若两个操作数是明确类型的表达式（比如变量），则按照正常的二
 > 进制数字来转换，int类型转换为long类型，long类型转换为float类型
-<<<<<<< HEAD
+
 > 等。
 
 ### 建议4：避免带有变长参数的方法重载
@@ -254,3 +254,145 @@ case 语句后面随手写上break，养成良好的习惯
 
 
 ```
+
+### 建议23 不要使用默认类型
+
+> java是先运算然后再进行类型转换的，如果int相乘超过了int最大值，就是负数了，再转为long,还是负数
+
+### 建议24 边界
+
+```java
+	// 一个会员拥有产品最多数量
+	public final static int LIMIT = 2000;
+
+	public static void main(String[] args) {
+		System.out.println(Integer.MAX_VALUE);// 2147483647
+		int cur = 1000;
+		Scanner scanner = new Scanner(System.in);
+		System.out.println("输入需要预定的数量");
+		while (scanner.hasNextInt()) {
+			int order = scanner.nextInt();
+			// 当前拥有的与预定产品的数量和
+			if (order > 0 && order + cur <= LIMIT) {
+				System.out.println("预定产品个数为:" + order);
+			} else {
+				System.out.println("超过最大限额，预定失败");
+			}
+		}
+
+	}
+//输入 int的最大值 2147483647 ，在加上1000，会超出int范围，结果是负数，那就小于2000
+```
+
+### 建议25 不要让四舍五入亏一方
+
+> 故事的引入可以说是“银行家舍入”，规则如下：
+>
+> ​	四舍六入五考虑，五后非零就进一，五后为零看奇偶，五前为偶应舍去，五前为奇要进一
+>
+> eg:保留2位精度
+>
+> ​	round(10.5551)=10.56
+>
+> ​	round(10.555)=10.56
+>
+> ​	round(10.545)=10.54
+>
+> 目前Java支持以下七种舍入方式：
+> 	1)ROUND_UP：远离零方向舍入。
+> 向远离0的方向舍入，也就是说，向绝对值最大的方向舍入，只要舍弃位非0即进位。
+> 	2)ROUND_DOWN：趋向零方向舍入。
+> 	向0方向靠拢，也就是说，向绝对值最小的方向输入，注意：所有的位都舍弃，不存在进位情况。
+> 	3)ROUND_CEILING：向正无穷方向舍入。
+> 	向正最大方向靠拢，如果是正数，舍入行为类似于ROUND_UP；如果为负数，则舍入行为类ROUND_DOWN。注意：Math.round方法使用的即为此模式。
+> 	4)ROUND_FLOOR：向负无穷方向舍入。
+> 向负无穷方向靠拢，如果是正数，则舍入行为类似于ROUND_DOWN；如果是负数，则舍入行为类似于ROUND_UP。
+> 	5)HALF_UP：最近数字舍入（5进）。
+> 这就是我们最最经典的四舍五入模式。
+> 	6)HALF_DOWN：最近数字舍入（5舍）。
+> 	在四舍五入中，5是进位的，而在HALF_DOWN中却是舍弃不进位。
+> 	7)HALF_EVEN：银行家算法。
+> 	在普通的项目中舍入模式不会有太多影响，可以直接使用Math.round方法，但在大量与货币数字交互项目中，一定要选择好近似的计算模式，尽量减少因算法不同而造成的损失。
+
+### 建议26 提防包装类型null值
+
+```java
+	public static void main(String[] args) {
+		List<Integer> list = new ArrayList<Integer>();
+		list.add(1);
+		list.add(2);
+		list.add(null);
+		calcSum(list);
+
+	}
+
+	public static int calcSum(List<Integer> list) {
+		int count = 0;
+		for (Integer integer : list) {
+			count += integer;
+		}
+		return count;
+	}
+```
+
+### 建议27 谨慎包装类型的大小比较
+
+
+
+
+
+### 建议28 优先使用整形池
+
+
+
+
+
+### 建议29 优先选择基本类型
+
+
+
+### 建议30 不要随便设置随机种子
+
+
+
+## 第3章 类、对象以方法
+
+### 建议31 在接口中不要存在实现代码
+
+
+
+
+
+### 建议32 静态变量一定要先声明后赋值
+
+
+
+### 建议33 不要覆写静态方法
+
+
+
+### 建议34 构造函数尽量简化
+
+
+
+### 建议35 避免在构造函数中初始化其他类
+
+
+
+
+
+### 建议36 使用构造代码块精炼程序
+
+- 静态代码块
+
+  用在静态变量的初始化或者创建前的环境初始化
+
+- 同步代码块
+
+  使用synchronized关键字修饰，并使用{}。它表示同一时间只有一个线程进入到该代码块中，是一种多线程保护机制
+
+- 改造代码块
+
+  在类中没有任何前缀或者后缀。使用{}
+
+

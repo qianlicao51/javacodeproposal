@@ -393,6 +393,268 @@ case 语句后面随手写上break，养成良好的习惯
 
 - 改造代码块
 
-  在类中没有任何前缀或者后缀。使用{}
+  在类中没有任何前缀或者后缀。使用{}。
 
+  编译器会把构造代码块放在每个构造函数最前端。构造代码块会在每个构造函数内首先执行，不是在构造函数之前运行的，它依托于构造函数执行。
+
+  构造函数应用场景。
+
+  1) 初始化实例变量
+
+  2) 初始化实例环境
+
+### 建议37 构造代码块会想你所想
+
+
+
+### 建议38 使用静态内部类提高封装性
+
+
+
+
+
+### 建议39 使用匿名类的构造函数
+
+
+
+
+
+### 建议40 匿名类的构造函数很特殊
+
+
+
+### 建议41 让多重继承成为现实
+
+
+
+
+
+### 建议42 让工具类不可实例化
+
+> Java工具类一般使用private 修饰构造函数，但是使用反射依旧可以对象来访问。
+>
+> 可以用private修饰的同时 在抛异常的方法限制访问。可以保证工具类不会实例化
+
+### 建议43 避免对象的浅拷贝
+
+> 一个类实现了 Cloneable接口就表示它具备了被拷贝的能力，如果再覆写clone()方法就会完全具备拷贝能力。拷贝是在内存中进行的，`所以性能方面比直接通过new生成对象要快很多`，特别是在大对象的生成上，这样会使性能提升显示。
+
+```shell
+#浅拷贝(也叫做影子拷贝)存在对象属性不测底拷贝的问题
+```
+
+```shell
+#拷贝的规则如下：
+1） 基本类型
+如果变量是基本类型，则拷贝其值，比如float,int
+2)对象拷贝
+#如果变量是一个实例对象，则拷贝引用地址，也就是说此时新拷贝出的对象与原对象共享实例变量，不受访问权限的限制。(你可以想象一下，一个private修饰的变量，竟然可以被2个不同实例对象访问，这让ava情何以堪)
+3）String字符串
+这个比较特殊，拷贝的也是一个地址，是个引用，但是在修改时，
+它会从字符串池（String Pool）中重新生成新的字符串，原有的字符串
+对象保持不变，在此处我们可以认为String是一个基本类型。
+```
+
+### 建议44 推荐使用序列化实现对象的拷贝
+
+```shell
+# 其实可以通过序列化方式来处理。在内存中通过字节流的拷贝来实现，也就是把母对象写到一个字节流中，在从字节流中将其读出来，这样就可以重建一个新对象了，该对象和母对象之间不存在引用共享的问题，也就相当于深拷贝一个新对象了。
+
+```
+
+[一个关于拷贝的博客](https://www.cnblogs.com/exceptioneye/p/4852962.html)
+
+```java
+public class CloneUtils {
+	public static <T extends Serializable> T clone(T obj) {
+
+		// 拷贝产生的对象
+		T clonedObj = null;
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ObjectOutputStream oss = new ObjectOutputStream(baos);
+			oss.writeObject(obj);
+			oss.close();
+
+			// 分配内存空间，写入原始对象，生成新对象
+			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+			ObjectInputStream ois = new ObjectInputStream(bais);
+
+			// 返回新对象 并做类型转换
+			clonedObj = (T) ois.readObject();
+			ois.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return clonedObj;
+	}
+}
+//此工具类 要求被拷贝的对象必须实现 Serializable接口。
+//还需要注意的2点
+//1)对象的内部属性都是可序列化的。如果有内部属性不可序列化，则会抛出序列化异常，这会让调试者很纳闷：生成一个对象怎么会出现序列化异常呢？从这一点来考虑，也需要把CloneUtils工具的异常进行细化处理
+//2)注意方法和属性的特殊修饰符
+
+```
+
+```shell
+# 采用序列化方式拷贝还有一种等简单的方法，使用Apache 的 commons工具包的SerializationUtils,直接使用更加简洁方便(读到此处我不清楚是 commons-lang 里面的 还是 commons-lang3里面的)
+
+```
+
+### 建议45 覆写equals方法时不要识别不出自己
+
+
+
+### 建议47 equals应该考虑null值情景
+
+> 在覆写equals时建议使用getClass进行类型判断，而不要使用instanceof
+
+### 建议48 覆写equals方法必须覆写hashCode方法
+
+```java
+public class Pserson {
+	private String name;
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(name).toHashCode();
+	}
+}
+//其中HashCodeBuilder是org.apache.commons.lang.builder包下的一个哈希码生成工具
+```
+
+### 建议49 推荐覆写toString方法
+
+> java 打印对象默认不友好。
+
+### 建议50 使用package-info类为包服务
+
+
+
+### 建议51 不要主动进行垃圾回收
+
+## 第4章 字符串
+
+### 建议52 推荐使用String直接量赋值
+
+
+
+
+
+### 建议53 注意方法中传递的参数要求
+
+```java
+	public static void main(String[] args) {
+		String string = "好是好啊";
+		System.out.println(string.replace("是", ""));//好好啊
+		
+		String string2 = "$是$好$";
+		//参数要求是正则
+		System.out.println(string2.replaceAll("$", ""));//$是$好$
+	}
+```
+
+### 建议54 正确使用Stirng StringBuffer StringBuilder
+
+> 在性能方面，String类的操作要远慢于StringBuffer和StringBuilder
+
+应用场景
+
+- String应用场景
+
+  在字符串不经常变化的场景中，例如常量声明，小量的变量运算
+
+- StringBuffer应用场景
+
+  频繁进行字符串(拼接，替换，删除)，并运行在多线程的环境中。例如XML解析、HTTP参数解析和封装等。
+
+- StringBuilder应用场景
+
+  在频繁进行字符串的运算（如拼接、替换、删除等），并且运行在单线程的环境中，则可以考虑使用StringBuilder，如SQL语句的拼装、JSON封装等。
+
+
+
+### 建议55 注意字符串的位置
+
+
+
+### 建议56 自由选择字符串拼接方法
+
+> 在拼接时，append方法最快，concat方法次之，加好最慢。
+>
+> 通常情况下，“+”非常符合我们编码习惯。只有在系统性能临界时才考虑concat或者append
+
+### 建议57 推荐在复杂字符串操作中使用正则表达式
+
+
+
+
+
+### 建议58 强烈建议使用UTF编码
+
+
+
+### 建议59 对字符串排序持一种宽容的心态
+
+
+
+## 第5章 数组和集合
+
+### 建议60 性能考虑，数组是选
+
+
+
+### 建议61 若有必要，使用变长数组
+
+```java
+public static <T> T[] expandCapactiy(T[] datas, int newLen) {
+		// 不能是负值
+		newLen = newLen < 0 ? 0 : newLen;
+		// 生成一个新数组，并拷贝原值
+		return Arrays.copyOf(datas, newLen);
+
+	}
+```
+
+### 建议62 警惕数组的浅拷贝
+
+> 通过上诉copyOf 拷贝是浅拷贝
+
+
+
+
+
+### 建议63 在明确的场景下，为集合指定初始容量
+
+
+
+### 建议64 多种最值算法，适时选择
+
+
+
+### 建议65 避开基本类型数组转换列表陷阱
+
+```java
+	public static void main(String[] args) {
+		int[] data = { 1, 2, 3, 4, 5 };
+		List<int[]> asList = Arrays.asList(data);
+		System.out.println("列表中元素个数" + asList.size());
+		// 列表中元素个数1
+		Integer[] datas = { 1, 2, 3, 4, 5 };
+		List<Integer> asLists = Arrays.asList(datas);
+		System.out.println("列表中元素个数" + asLists.size());
+		// 列表中元素个数5
+	}
+
+```
+
+> 原始类型数组不能作为asList的输入参数，否则会引起程序逻辑混乱。
+
+### 建议66 asList方法产生的List对象不可更改
+
+```java
+ public static <T> List<T> asList(T... a) {
+ 	 return new ArrayList<>(a);
+ }
+```
 

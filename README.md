@@ -668,5 +668,61 @@ public static <T> T[] expandCapactiy(T[] datas, int newLen) {
 ### 建议67 不同的列表选择不同的遍历方法
 
 > ArrayList 遍历时采用下标方式会提升性能
+
+
+
+
+### 建议68 频繁插入和删除时使用LinkedList
+
+1）插入
+
+​	插入时 LinkedList效率比ArrayList快50倍
+
+2）删除元素
+
+​	LinkedList与ArrayList之间的PK，其中LinkedList胜两局：删除和插入效率高；ArrayList胜一局：修改元素效率高。总体上来说，在“写”方面，LinkedList占优势，而且在实际使用中，修改是一个比较少的动作。因此，如果有大量的写操作（更多的是插入和删除动作），推荐使用LinkedList。
+
+​	
+
+​	
+
+### 建议69 列表相等只需关心元素数据
+
+
+
+
+
+### 建议70 子列表只是原列表的一个视图
+
+
+
+### 建议71 推荐使用subList处理局部列表
+
+```java
+	public static void main(String[] args) {
+
+		// 删除数组 20·30 元素
+		// 初始化一个固定长度，不可变列表
+		List<String> listData = Collections.nCopies(100000, "grq");
+		//变为可变数组
+		List<String> list = new ArrayList<String>(listData);
+		long start = System.currentTimeMillis();
+		for (int i = 20; i < 30; i++) {
+			list.remove(i);
+		}
+		long end = System.currentTimeMillis();
+		System.out.println(end - start);
+ 
+		List<String> list2 = new ArrayList<String>(listData);
+		start = System.currentTimeMillis();
+		list2.subList(20, 30).clear();
+		end = System.currentTimeMillis();
+		System.out.println(end - start);
+	}
+// subList所有的操作都是在原始的列表上进行的，那先用subList取出一个子列表，然后清空。
 ```
+
+### 建议72 生成子类表后不要在操作原列表
+
+
 

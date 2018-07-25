@@ -816,3 +816,279 @@ public static void main(String[] args) {
 
 ### 建议75 集合中的元素必须做到compareTo和equals同步
 
+```java
+// indexOf是通过equals方法判断的，equals等于true就认为是找到符合的元素了
+//binarySearch 是通过conpateTo方法返回值，返回值为0 就认为是找到符合的元素了
+```
+
+
+
+
+
+### 建议76 集合运算是使用更加优雅的方式
+
+```java
+public static void main(String[] args) {
+	List<String> aList = new ArrayList<String>();
+	aList.add("A");
+	aList.add("B");
+	aList.add("C");
+	aList.add("V");
+	List<String> bList = new ArrayList<String>();
+
+	bList.add("B");
+	bList.add("C");
+	bList.add("BB");
+
+	// 并集：也叫做合计，把两个集合加起来
+	// aList.addAll(bList);
+
+	// 交集：计算两个集合共有的元素
+	// aList.retainAll(bList);
+
+	// 差集：由所有属于A但是不属于B的元素组成的集合(从A中删除B)
+	// aList.removeAll(bList);
+
+	// 无重复的并集(1:删除B在A出现的元素；2:把剩余的B元素加到A)
+	bList.removeAll(aList);
+	aList.addAll(bList);
+	System.out.println(aList);
+
+}
+```
+
+
+
+
+
+### 建议77 使用shuffle打乱列表
+
+```java
+
+```
+
+> 使用suffle 即可打算一个列表顺序。
+>
+> 可以用在程序伪装、抽奖程序、安全传输方面
+
+
+
+
+
+### 建议78 减少HashMap中元素的数量
+
+> 内存溢出问题，经常与HashMap有关。例如在使用缓存操作数据时，大批量的增删查该 会让内存溢出。
+
+
+
+### 建议79 集合中的哈希码不要重复
+
+
+
+### 建议80 多线程使用Vector或HashTable
+
+
+
+
+
+### 建议81 非稳定排序推荐使用list
+
+
+
+
+
+### 建议82 由点及面，一叶知秋——集合大家族 
+
+
+
+
+
+## 第6章 枚举和注解
+
+### 建议83 推荐使用枚举定义常量
+
+```shell
+# 枚举与类常量和静态常量相比，优势
+#1）枚举常量更简单
+#	枚举常量只需要定义每个枚举项，不需要枚举值。
+#2）枚举常量属于稳定态
+#3）枚举具有内置方法
+#4）枚举可以自定义方法
+
+```
+
+```java
+public class Client83 {
+	public static void main(String[] args) {
+		for (Season season : Season.values()) {
+			System.out.println(season);
+		}
+	}
+}
+
+enum Season {
+	Spring, Summer, Autumn, Winter;
+}
+```
+
+### 建议84 使用构造函数协助描述枚举项
+
+
+
+
+
+### 建议85 小心switch带来的空指针异常
+
+
+
+
+
+### 建议86 在switch的default代码块中增加AssertionError错误
+
+
+
+> 为了避免枚举增加了枚举值，而没修改switch导致错误
+
+
+
+
+
+### 建议87 使用valueOf前必须进行校验
+
+```java
+public class Client87 {
+	public static void main(String[] args) {
+		List<String> asList = Arrays.asList("Spring", "summer");
+
+		for (String name : asList) {
+			// 查找字面值与ame相同的枚举项
+
+			Season season = Season.valueOf(name);
+			if (season != null) {
+				System.out.println(season);
+			} else {
+				System.out.println("没有相关枚举项");
+			}
+		}
+	}
+}
+/*Spring
+Exception in thread "main" java.lang.IllegalArgumentException: No enum constant com.zhuziym.char06.Season.summer
+	at java.lang.Enum.valueOf(Enum.java:238)
+	at com.zhuziym.char06.Season.valueOf(Client83.java:1)
+	at com.zhuziym.char06.Client87.main(Client87.java:18)
+	
+	summer (s小写)无法转换为Season枚举，抛出异常。
+*/
+```
+
+上述异常解决办法
+
+```java
+// 1 try catch捕获异常
+// 2 扩展枚举类
+enum Season {
+	Spring, Summer, Autumn, Winter;
+	// 是否包含指定名称的枚举项
+	public static boolean contains(String name) {
+		// 所有的枚举值
+		Season[] values = values();
+		for (Season season : values) {
+			if (season.name().equals(name)) {
+				return true;
+
+			}
+
+		}
+		return false;
+	}
+}
+
+```
+
+
+
+### 建议88 用枚举实现工厂方法模式更简洁
+
+
+
+
+
+### 建议89 枚举项数量限制在64个以内
+
+
+
+
+
+### 建议90 小心注解继承
+
+
+
+
+
+### 建议91 枚举和注解结合威力更大
+
+
+
+
+
+### 建议92 注意@Override不同版本的区别
+
+
+
+
+
+## 第7章 泛型和反射
+
+
+
+### 建议93 Java的泛型是类型擦除的 
+
+```java
+public class Client93 {
+	public void arrayMethod(String[] strArray) {
+	}
+
+	public void arrayMethod(Integer[] intArray) {
+	}
+
+
+	public void listMethod(List<Integer> intList) {
+	}
+	public void listMethod(List<String> intList) {
+	}
+}
+//上传编译不过 ，在编译后所有的泛型都会做相应的转化
+//List<String> List<Integet> List<T>擦除后的类型为List
+// List<String>[] 擦除后的类型为list[]
+
+```
+
+
+
+### 建议94 不能初始化泛型参数和数组
+
+
+
+### 建议95 强制声明泛型的实际类型
+
+
+
+
+
+### 建议96 不同的场景使用不同的泛型通配符
+
+
+
+### 建议97 警惕泛型是不能协变和逆变的
+
+
+
+
+
+### 建议98 建议采用的顺序是List<T> 、List<?> 、List<Object> 
+
+###   
+
+
+

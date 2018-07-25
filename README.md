@@ -724,5 +724,95 @@ public static <T> T[] expandCapactiy(T[] datas, int newLen) {
 
 ### 建议72 生成子类表后不要在操作原列表
 
+​	针对sbuList来说。
 
+
+
+
+
+### 建议73 使用Comparator进行排序
+
+​	排序一般有2种方式时间，1是Comparable接口 2是Comparator接口。
+
+```java
+//实体类
+public class Emp implements Comparable<Emp> {
+	// 根据id 排序
+	private int id;
+	private String name;
+	private Postion postion;
+
+
+	@Override
+	public int compareTo(Emp o) {
+		// 正序
+		// return new CompareToBuilder().append(id, o.id).toComparison();
+		return new CompareToBuilder().append(postion, o.postion)// 职位排序
+				.append(id, o.id)// 工号排序
+				.toComparison();
+	}
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
+	}
+}
+
+//
+public enum Postion {
+	Boss, Manager, Staff
+}
+	public static void main(String[] args) {
+		List<Emp> list = new ArrayList<Emp>(5);
+		list.add(new Emp(2, "lifneg", Postion.Manager));
+		list.add(new Emp(1, "grq", Postion.Boss));
+		list.add(new Emp(4, "taoshuai", Postion.Staff));
+		list.add(new Emp(3, "sunjie", Postion.Manager));
+		list.add(new Emp(5, "zhucaixi", Postion.Staff));
+
+	  
+
+		Collections.sort(list);
+
+		for (Emp emp : list) {
+			System.out.println(emp);
+		}
+		Collections.sort(list,Collections.reverseOrder(new PostionComparator()));
+		 
+	}
+```
+
+> Comparable接口可以作为实现类的默认排序法，
+>
+> Comparator接口则是一个类的扩展排序工具。
+
+​	
+
+### 建议74 不推荐使用binarySearch对列表进行检索
+
+```java
+public static void main(String[] args) {
+	List<String> list = new ArrayList<String>();
+	list.add("上海");
+	list.add("广州");
+	list.add("广州");
+	list.add("北京");
+	list.add("天津");
+	System.out.println(list);
+	System.out.println(list.indexOf("广州"));
+	// 二分法查找
+	System.out.println(Collections.binarySearch(list, "广州"));
+
+	/*
+	 * [上海, 广州, 广州, 北京, 天津] 1 2
+	 */
+}
+//错误的原因在于：二分法查询的一个前提是，数据已经升序排列。否则二分法查找结果不准确。
+```
+
+
+
+
+
+### 建议75 集合中的元素必须做到compareTo和equals同步
 

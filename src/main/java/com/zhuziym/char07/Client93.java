@@ -7,6 +7,8 @@ package com.zhuziym.char07;
  */
 public class Client93 {
 	public void arrayMethod(String[] strArray) {
+		
+		Long antLong = 1_000_000_000L;
 	}
 
 	public void arrayMethod(Integer[] intArray) {

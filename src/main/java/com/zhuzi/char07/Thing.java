@@ -8,7 +8,7 @@ import java.util.ArrayList;
  * @Description: TODO(用一句话描述该文件做什么)
  * @author 作者 grq
  * @version 创建时间：2018年8月5日 下午2:56:43
- *
+ * 
  */
 public class Thing implements Cloneable {
 	// 定义私有变量

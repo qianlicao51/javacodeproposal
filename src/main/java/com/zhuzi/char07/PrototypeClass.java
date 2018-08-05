@@ -1,5 +1,5 @@
 package com.zhuzi.char07;
- 
+
 /**
  * @Title: PrototypeClass.java
  * @Package com.zhuzi

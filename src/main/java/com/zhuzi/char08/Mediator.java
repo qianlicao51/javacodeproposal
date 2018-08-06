@@ -8,7 +8,6 @@ package com.zhuzi.char08;
  * @version 创建时间：2018年8月6日 上午11:42:13
  *
  */
-//同用抽象中介者
 public abstract class Mediator {
 	// 定义同事类
 	protected ConcreteColleague1 c1;

@@ -1249,3 +1249,32 @@ public class Clinet104 {
 
 ### 建议105 动态加载不适合数组
 
+
+
+```shell
+# forName动态加载，必须是一个类(8种基本数据类型除外，它们不是一
+#个类)；其次，它必须有可追索的类路径
+```
+
+#### 如何动态加载一个数组
+
+```shell
+# 使用Array数组反射类动态加载
+
+```
+
+```java
+public static void main(String[] args) {
+	// 动态创建数组
+	String[] strs = (String[]) Array.newInstance(String.class, 8);
+	// 创建一个多维数组
+	int[][] ints = (int[][]) Array.newInstance(int.class, 2, 3);
+}
+```
+
+
+
+
+
+### 建议106 动态代理可以使代理模式更加灵活
+

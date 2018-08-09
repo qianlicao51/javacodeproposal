@@ -1100,4 +1100,152 @@ public class Client93 {
 
 
 
+### 建议101 之一Class类的特殊性
+
+
+
+- 无构造函数。一般的类都有构造函数，用于创建对象，但是Class类却没有构造函数，不能实例化，Class对象是在加载类时由Java虚拟机通过类加载器中的defineClass方法自动构造的
+- 可描述基本类型。8个基本类型在JVM中并不是一个对象，他们一般存在于栈内存中，但是Class类任然可以描述他们，例如使用int.class表示int类型的对象
+
+
+
+#### 获得一个Class对象的3种途径
+
+```shell
+# 1 类属性方式 如String.class
+# 2对象的getClsas 方法
+# 3 forName的方法加载   Class.forName("")
+
+
+
+```
+
+
+
+### 建议102 适时选择getDeclaredxxx 和getxxx
+
+
+
+```java
+public static void main(String[] args) throws Exception {
+
+	// 方法名称
+	String methodName = "doStuff";
+	// TODO 获取自身类的所有方法，包括 public 私有 而写不受限于访问权限
+	Method declaredMethod = Foo.class.getDeclaredMethod(methodName);
+	// TODO getMethod 获得的是publc 访问级别 的方法(包括从父类继承过来的方法)
+	Method method = Foo.class.getMethod(methodName);
+}
+
+```
+
+
+
+```java
+public static void main(String[] args) {
+	Method[] methods = Dog.class.getMethods();
+	Method[] declaredMethods = Dog.class.getDeclaredMethods();
+
+	// 反射到父类 再次获取通过继承得到的父类上的方法
+	Class<? super Dog> superclass = Dog.class.getSuperclass();
+	System.out.println(superclass.getName());
+	for (Method method : methods) {
+		System.out.println(method.getName());
+	}
+}
+```
+
+
+
+### 建议103 反射访问属性或者方法时将Accessible设置为true
+
+
+
+
+
+`method.setAccessible(true)` 通常我们放射时这样设置方法是否可被执行。如下
+
+```java
+public static void main(String[] args) throws Exception, SecurityException {
+
+	// 反射获得方法
+	Method method = Foo.class.getMethod("doStuff");
+	// 打印方法可访问性
+	System.out.println(method.isAccessible());
+    //设置方法可访问性
+	method.setAccessible(true);
+	method.invoke(new Foo());
+	/*
+	 * 结果
+	 * false
+	Client103.Foo.doStuf()*/
+
+}
+```
+
+但是 `Foo`代码如下，修饰符是`public` ，没有雨限制
+
+```java
+public class Foo {
+	public final void doStuff() {
+		System.out.println("Client103.Foo.doStuf()");
+	}
+}
+```
+
+
+
+**Accessible的属性并不是我们语法层级理解的访问权限，而是指是否更容易获得，是否进行安全检查。**
+
+
+
+### 建议104 使用forName动态加载类文件
+
+`动态加载（Dynamic Loading）是指程序运行时加载需要的类库文件，对Java程序来说，一般情况下，一个类文件在启动或者首次初始化时被加载到内存中，而反射则可以在运行时在决定是否要加载一个类，然后JVM加载并初始化，这就是动态加载 `
+
+`一个类文件只有被加载到内存后才能生成实例对象，也就是一个对象的生成必定经历以下2个步骤`
+
+```shell
+# 1 加载到内存中生成Class的实例对象
+# 2 通过new 关键字生成实例对象
+```
+
+
+
+#### 动态加载的意义
+
+```shell
+# 加载一个类即表示要初始化该类的static变量，特别是 static代码块
+# ，这里我们可以做大量工作，比如注册自己，初始化环境
+```
+
+```java
+public class Utils {
+	static {
+		System.out.println("Clinet104.Utils.enclosing_method()");
+	}
+}
+public class Clinet104 {
+	public static void main(String[] args) throws ClassNotFoundException {
+		Class.forName("com.zhuziym.char07.Utils");
+	}
+}
+//打印结果
+//Clinet104.Utils.enclosing_method()
+//Utils 我们没有初始化，只是经过Class.forName就打印了语句
+//这是因为Utils类被加载后，JVM会自动初始化其static 变量 和static
+// 代码块，这是类加载机制决定的
+```
+
+`上述这种动态加载，最经典的就是在数据库驱动程序的加载代码片中`
+
+
+
+`forName只是加载类，并不执行任何代码`
+
+
+
+
+
+### 建议105 动态加载不适合数组
 

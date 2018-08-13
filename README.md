@@ -1278,3 +1278,78 @@ public static void main(String[] args) {
 
 ### 建议106 动态代理可以使代理模式更加灵活
 
+
+
+​	Java的反射框架提供了动态代理机制，允许在运行期对目标类生成代理，避免重复开发。
+
+​	一个静态代理是通过`代理主题角色(Proxy)`  和 `具体主题角色(Real Subject)`  共同实现抽象主题`Subject`的逻辑，只是`代理主题角色把相关执行逻辑委托给了具体主题而已`，一个简单的静态代理如下：
+
+---------------
+
+==================抽象主题类
+
+```java
+public interface Subject {
+	public void request();
+}
+
+```
+
+
+
+==================具体主题角色
+
+```java
+public class RealSubject implements Subject {
+
+	@Override
+	public void request() {
+		System.out.println("RealSubject.request()");
+	}
+
+}
+```
+
+==================代理主题角色
+
+```java
+public class Proxy implements Subject {
+
+	// 要代理哪个实现类
+	private Subject sub = null;
+
+	public Proxy(Subject sub) {
+		this.sub = sub;
+	}
+
+	@Override
+	public void request() {
+		this.before();
+		sub.request();
+		this.after();
+	}
+
+	/**
+	 * 预处理
+	 */
+	public void before() {
+		System.out.println("Proxy.before()");
+	}
+
+	/**
+	 * 善后处理
+	 */
+	public void after() {
+		System.out.println("Proxy.after()");
+	}
+}
+```
+
+==================
+
+
+
+==================
+
+==================
+

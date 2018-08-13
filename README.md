@@ -1345,7 +1345,13 @@ public class Proxy implements Subject {
 }
 ```
 
-==================
+-----
+
+==================动态代理
+
+​	Java还提供了`java.lang.reflect.Proxy` 用于实现动态代理；只是提供`一个抽象主题角色` 和 `具体主题角色` 
+
+
 
 
 

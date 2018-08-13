@@ -14,6 +14,7 @@ import com.zhuziym.char07_02.Subject;
  *
  */
 public class SubjectHandler implements InvocationHandler {
+	//被代理对象
 	private Subject sub;
 
 	public SubjectHandler(Subject sub) {

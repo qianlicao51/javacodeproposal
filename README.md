@@ -1349,13 +1349,202 @@ public class Proxy implements Subject {
 
 ==================动态代理
 
-​	Java还提供了`java.lang.reflect.Proxy` 用于实现动态代理；只是提供`一个抽象主题角色` 和 `具体主题角色` 
+​	Java还提供了`java.lang.reflect.Proxy` 用于实现动态代理；只是提供`一个抽象主题角色` 和 `具体主题角色`  ，就可以动态实现其逻辑。
+
+==================抽象主题角色
+
+```java
+public interface Subject {
+	public void request();
+}
+```
 
 
 
 
+
+==================具体主题角色
+
+```java
+public class RealSubject implements Subject {
+
+	@Override
+	public void request() {
+		System.out.println("RealSubject.request()");
+	}
+
+}
+```
 
 ==================
 
-==================
+```java
+public class SubjectHandler implements InvocationHandler {
+	//被代理对象
+	private Subject sub;
+
+	public SubjectHandler(Subject sub) {
+		super();
+		this.sub = sub;
+	}
+
+	// 委托处理方法
+	@Override
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		System.out.println("SubjectHandler.invoke()--预处理");
+		// 直接调用被代理类的方法
+		Object object = method.invoke(sub, args);
+		System.out.println("SubjectHandler.invoke()--后处理");
+		return object;
+	}
+
+}
+```
+
+
+
+​	此处没有了主题代理角色，取而代之的是`SubjectHandler`作为主要的逻辑委托处理，其中`invoke`方法是接口`InvocationHandler`定义必须实现的。完成对真实方法的调用。
+
+==================场景类
+
+```java
+public class Client106 {
+	public static void main(String[] args) {
+
+		// 具体主题角色，也就是被代理类
+		Subject subject = new RealSubject();
+
+		// 代理实例的处理 handler
+		SubjectHandler handler = new SubjectHandler(subject);
+
+		// 当前加载器
+		ClassLoader classLoader = subject.getClass().getClassLoader();
+
+		// 动态代理
+		Subject proxyInstance = (Subject) java.lang.reflect.Proxy.newProxyInstance(classLoader, subject.getClass().getInterfaces(), handler);
+
+		// 执行具体主题角色的方法
+		proxyInstance.request();
+
+	}
+}
+```
+
+
+
+
+
+### 建议107 使用反射增加装饰模式的普适性
+
+
+
+​	装饰模式就是动态地给一个对象添加一些额外的职责。`使用Java的动态代理可以实现装饰模式的效果，而且其灵活性、适应性更强。`
+
+​	以卡通《猫和老鼠》为例。
+
+```java
+// 
+public interface Animal {
+	public void soStuff();
+}
+```
+
+```java
+//老鼠
+public class Rat implements Animal {
+
+	@Override
+	public void soStuff() {
+		System.out.println("Jerry will paly with tom");
+	}
+
+}
+```
+
+```java
+//给老鼠增加能力
+public interface Feature {
+	// 定义某种能力
+	void load();
+}
+public class DigFeature implements Feature {
+
+	@Override
+	public void load() {
+		System.out.println("钻地能力……");
+	}
+
+}
+public class FlyFeature implements Feature {
+
+	@Override
+	public void load() {
+		System.out.println("增加飞行能力……");
+	}
+
+}
+
+```
+
+ `包装动作类`
+
+```java
+public class DecorateAnimal implements Animal {
+
+	// 被包装的动物
+	private Animal animal;
+
+	// 使用哪一个包装器
+	private Class<? extends Feature> clz;
+
+	public DecorateAnimal(Animal animal, Class<? extends Feature> clz) {
+		this.animal = animal;
+		this.clz = clz;
+	}
+
+	@Override
+	public void soStuff() {
+		InvocationHandler handler = new InvocationHandler() {
+			@Override
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				Object obj = null;
+				// 设置包装条件
+				if (Modifier.isPublic(method.getModifiers())) {
+					obj = method.invoke(clz.newInstance(), args);
+				}
+				animal.soStuff();
+				return obj;
+			}
+		};
+
+		// 当前加载器
+		ClassLoader cl = getClass().getClassLoader();
+		Feature proxy = (Feature) Proxy.newProxyInstance(cl, clz.getInterfaces(), handler);
+		proxy.load();
+	}
+}
+```
+
+`注意事例中的doStuff方法，一个装饰类型必然是抽象构建的子类型，必须实现doStuf，此处的doStuff委托给了动态代理执行，并且在动态代理的控制器Handler中设置了决定装饰方式和行为的条件。`
+
+​	`调用如下`
+
+```java
+public static void main(String[] args) {
+
+	// 定义Jetty这只老鼠
+	Animal jetty = new Rat();
+
+	// 为Jetty增加飞行能力
+	jetty = new DecorateAnimal(jetty, FlyFeature.class);
+
+	// 为Jetty增加挖掘能力
+	jetty = new DecorateAnimal(jetty, DigFeature.class);
+
+	//
+	jetty.soStuff();
+}
+```
+
+`这是一个通用的装饰模式，只需要定义被装饰的类及装饰类即可，装饰行为由动态代理执行，实现了对装饰和被装饰类的完全解耦，提高了系统扩展性`
 

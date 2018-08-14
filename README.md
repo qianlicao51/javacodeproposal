@@ -1741,3 +1741,274 @@ public class Client113 {
 
 
 
+
+
+### 建议116 异常只为异常服务
+
+
+
+### 建议117 多使用异常，把性能问题放一边
+
+
+
+## 第9章 多线程和并发
+
+
+
+### 建议 118 不推荐覆写start方法
+
+
+
+```java
+public synchronized void start() {
+	 //判断线程状态，必须是为启动状态
+	if (threadStatus != 0)
+		throw new IllegalThreadStateException();
+	 //加入线程组中
+	group.add(this);
+
+	boolean started = false;
+	try {
+        //分配栈内存，启动线程，运行run方法
+		start0();
+		started = true;
+	} finally {
+		try {
+            
+			if (!started) {
+				group.threadStartFailed(this);
+			}
+		} catch (Throwable ignore) {
+		 
+		}
+	}
+}
+//本地方法
+private native void start0();
+//此处关键方法是 本地start(),它实现了启动线程、申请栈内存、
+//运行run方法、修改线程状态等职责，线程管理和栈内存管理都是
+//由JVM负责，如果覆盖了start方法，也就是撤销了线程管理和栈内
+//存管理的能力。
+
+```
+
+
+
+### 建议119 启动线程前stop方法是不可靠的
+
+
+
+```shell
+# stop方法的目的并不是停止一个线程，而是设置线程为不可用状态
+#
+#Thread类stop方法会根据线程状态来判断是终结线程还是设置为不可
+#运行状态，对于未启动的线程(线程状态为new)来说，会设置其标志位
+#为不可启动，而其他的状态则是停止。
+```
+
+
+
+
+
+### 建议120 不要使用stop方法停止线程
+
+
+
+`线程启动完毕后，Java提供的终止方法只有一个stop`，但是最好不要用这个。
+
+
+
+```xml
+<!--
+1 stop方法是过时的。
+ 
+2 stop方法会导致代码逻辑不完整
+
+3 stop方法会破坏原子逻辑
+-->
+```
+
+
+
+
+
+### 建议121 线程优先级只使用3个等级
+
+
+
+`线程优先级就决定了线程获得CPU运行的机会，优先级越高获得机会越大，java的线程优先级有10个级别(也可以说是11个级别，级别为0的线程是JVM的，应用程序不能设置该级别)`
+
+```xml
+<!--
+1)线程并不严格遵照线程优先级别来执行
+2)优先级差别越大，运行机会差别越明显
+
+-->
+```
+
+
+
+```java
+public class Thread implements Runnable {
+    /**
+     * 最低优先级
+     */
+    public final static int MIN_PRIORITY = 1;
+
+   /**
+     * 默认优先级
+     */
+    public final static int NORM_PRIORITY = 5;
+
+    /**
+     * 最高优先级
+     */
+    public final static int MAX_PRIORITY = 10;
+
+}
+```
+
+
+
+### 建议122 使用线程异常处理器提高系统可靠性
+
+
+
+```java
+public class TcpServer implements Runnable {
+
+	// 创建后立即运行
+	public TcpServer() {
+
+		Thread thread = new Thread(this);
+		thread.setUncaughtExceptionHandler(new TcpServerExceptionHandler());
+		thread.start();
+	}
+
+	// 异常处理器
+	private static class TcpServerExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+		@Override
+		public void uncaughtException(Thread t, Throwable e) {
+			// 记录线程异常信息
+			System.out.println("线程" + t.getName() + "出现异常，自行重启");
+			e.printStackTrace();
+			// 重启线程，保证业务不中断
+			new TcpServer();
+		}
+
+	}
+	@Override
+	public void run() {
+		for (int i = 0; i < 3; i++) {
+			try {
+				Thread.sleep(1000);
+				System.out.println("系统组成运行");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			// 抛出异常
+			throw new RuntimeException("淡泊明志，宁静致远");
+		}
+	}
+}
+```
+
+```xml
+<!--
+系统组成运行
+线程Thread-0出现异常，自行重启
+java.lang.RuntimeException: 淡泊明志，宁静致远
+	at com.zhuziym.char09.TcpServer.run(TcpServer.java:45)
+	at java.lang.Thread.run(Thread.java:744)
+系统组成运行java.lang.RuntimeException: 淡泊明志，宁静致远
+	at com.zhuziym.char09.TcpServer.run(TcpServer.java:45)
+	at java.lang.Thread.run(Thread.java:744)
+
+线程Thread-1出现异常，自行重启
+系统组成运行java.lang.RuntimeException: 淡泊明志，宁静致远
+线程Thread-2出现异常，自行重启
+
+-->
+```
+
+`java1.5之后在Thread增加setUncaughtExceptionHandler`方法，实现了线程异常的捕获和处理。
+
+​	在使用是需要注意以下3方面：
+
+```xml
+<!--
+1)共享资源锁定
+	如果线程异常产生的原因是资源被锁定，自动重启只会增加系统负
+担，无法提供不间断服务。
+2) 脏数据引起系统逻辑混乱
+3) 内存溢出
+	如果异常出现了，但是由该线程创建的对象并不会马上回收，如果重
+新启动线程，在创建一批新对象，可能会引起内存泄露问题。
+-->
+```
+
+
+
+
+
+### 建议123 volatile不能保证数据同步
+
+```java
+public class UnsafeThread implements Runnable {
+	// 共享资源
+	private volatile int count = 0;
+	@Override
+	public void run() {
+		for (int i = 0; i < 1_000; i++) {
+			Math.hypot(Math.pow(92456789, i), Math.cos(i));
+		}
+		count++;
+	}
+
+	public int getCount() {
+		return count;
+	}
+
+}
+
+```
+
+
+
+```java
+public static void main(String[] args) throws InterruptedException {
+	// 最大循环次数
+	int value = 1000;
+
+	// 循环次数，防止出现无线循环
+	int loops = 0;
+	// 主线程组，用于估计活动线程数
+	ThreadGroup tg = Thread.currentThread().getThreadGroup();
+
+	while (loops++ < value) {
+		UnsafeThread ut = new UnsafeThread();
+		for (int i = 0; i < value; i++) {
+			new Thread(ut).start();
+		}
+		// 等待15毫秒，等待活动线程数量为1
+		do {
+			Thread.sleep(15);
+		} while (tg.activeCount() != 1);
+
+		if (ut.getCount() != value) {
+			// 出现线程不安全的情况
+			System.out.println("循环到第" + loops + " 次，出现线程不安全");
+			System.out.println("此时count = " + ut.getCount());
+			System.exit(0);
+		}
+	}
+}
+```
+
+`volatile不能保证数据时同步的，只能保证线程获得最新值`
+
+
+
+### 建议124 异步运算考虑使用Callable接口
+

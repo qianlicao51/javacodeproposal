@@ -24,14 +24,14 @@ public class Client75 {
 		// 排序
 		Collections.sort(cities);
 		System.out.println(cities);
-		
-		//查找对象
+
+		// 查找对象
 		int indexOf = cities.indexOf(cs);
 		int binarySearch = Collections.binarySearch(cities, cs);
-		
-		System.out.println("索引值indexOf"+indexOf);
-		System.out.println("索引值binarySearch"+binarySearch);
-		
+
+		System.out.println("索引值indexOf" + indexOf);
+		System.out.println("索引值binarySearch" + binarySearch);
+
 	}
 }
 
@@ -79,7 +79,7 @@ class City implements Comparable<City> {
 
 	@Override
 	public String toString() {
-		return   ToStringBuilder.reflectionToString(this);
+		return ToStringBuilder.reflectionToString(this);
 	}
 
 }

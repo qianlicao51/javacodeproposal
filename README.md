@@ -1572,3 +1572,172 @@ public static void main(String[] args) {
 
 ### 建议110 提倡异常封装
 
+​	java API 提供的异常都是比较低级的，只是开发人员能看懂，这就需要对异常进行封装了。异常封装有3方面优点：
+
+```shell
+# 1 提高系统的友好性
+# 2 提高系统的可维护性
+# 3 解决Java异常机制自身的缺陷
+```
+
+
+
+
+
+### 建议111 采用异常链传递异常
+
+
+
+
+
+### 建议112 受检异常尽可能转化为非受检异常
+
+
+
+
+
+### 建议113 不要在finally块中处理返回值
+
+
+
+`在finally代码块中加入return语句，会导致2个问题`
+
+```shell
+# 1 覆盖了try代码块中的return 返回值
+# 2 屏蔽异常
+```
+
+
+
+```java
+public class Client113 {
+
+	public static void main(String[] args) throws Exception {
+		System.out.println(doStuff(-1));
+		System.out.println(doStuff(100));
+		System.out.println(val());
+		System.out.println(modifyPserson().getName());
+	}
+
+	private static int doStuff(int i) throws Exception {
+
+		try {
+			if (i < 0) {
+				throw new DataFormatException("数据格式错误");
+			} else {
+				return i;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			return -1;
+		}
+
+	}
+
+	/**
+	 * 该方法返回值永远是1。
+	 * 因为finally执行完毕后该方法已经有返回值了，后续代码块就不再
+	 * 执行
+	 * @return
+	 */
+	private static int val() {
+		int a = 1;
+		try {
+			return a;
+		} catch (Exception e) {
+		} finally {
+			a = -1;
+		}
+		return 0;
+	}
+
+	/**
+	 * 此方法返回值永远都是“finally”，
+	 * 因为Person是一个引用对象，在try代码块中的返回值是Person对象的地址，finally中再修改当然就是 finally
+	 * @return
+	 */
+	public static Pserson modifyPserson() {
+		Pserson p = new Pserson();
+		p.setName("张三");
+		try {
+			return p;
+		} catch (Exception e) {
+		} finally {
+			p.setName("finally");
+		}
+
+		p.setName("finally after");
+		return p;
+	}
+
+	class Person {
+		private String name;
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String toString() {
+			return org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString(this);
+		}
+
+	}
+}
+```
+
+
+
+
+
+### 建议114 不要在构造函数中抛出异常
+
+
+
+`java的异常机制有3种`
+
+##### 1 error类以及子类
+
+```shell
+# error类以及子类表示的错误。它是不需要程序员处理也不能处理的异
+# 常，比如 VirtualMachineError虚拟机错误，ThreadDeath线程僵
+# 死等
+
+```
+
+##### 2 RuntimeException
+
+```shell
+# RuntimeException类以及子类表示是非受检异常，是系统可能抛出
+# 的异常，程序员可以处理，也可以不处理，例如空指针异常
+
+```
+
+##### Exception
+
+```shell
+# Exception以及子类(不包括非受检异常)表示的是受检异常，这是必须处理的，否则通不过编译。例如数据库访问异常SQLException
+```
+
+
+
+构造函数抛出以上3种异常
+
+```shell
+# 1 构造函数抛出错误是程序员无法处理的
+# 2 构造函数不应该抛出非受检异常
+# 3 构造函数尽可能不要抛出受检异常
+```
+
+
+
+### 建议115 使用Throwable获得栈信息
+
+
+

@@ -2012,3 +2012,714 @@ public static void main(String[] args) throws InterruptedException {
 
 ### 建议124 异步运算考虑使用Callable接口
 
+```xml
+<!--
+	多线程2种方式,存在的缺点，run方法没有返回值，不能抛出异常。
+	java1.5开始，引入了Callable 接口，类似于Runable接口，实现
+它就可以实现多线程任务。(具有返回值，可以抛出异常)
+-->
+```
+
+
+```java
+public class TaxCalculator implements Callable<Integer> {
+	// 本金
+	private int seedMoney;
+
+	public TaxCalculator(int seedMoney) {
+
+		this.seedMoney = seedMoney;
+	}
+
+	@Override
+	public Integer call() throws Exception {
+
+		// 模拟复杂运算，运行一次10秒
+		TimeUnit.MILLISECONDS.sleep(10_000);
+		return seedMoney / 10;
+	}
+}
+
+```
+
+`实现Callable接口的类，只是表明它是一个可调用的任务，并不表示它具有多线程运算能力，还需要执行器来执行`
+
+```java
+public static void main(String[] args) throws Exception {
+	// 生成一个线程的异步执行器
+	ExecutorService es = Executors.newSingleThreadExecutor();
+	// 线程执行后的期望值
+	Future<Integer> future = es.submit(new TaxCalculator(100));
+
+	while (!future.isDone()) {
+		// 还没完成等待200毫秒
+		TimeUnit.MILLISECONDS.sleep(200);
+		// 输出进度条
+		System.out.print("#");
+	}
+	System.out.println("\n计算完成，结果是" + future.get());
+	es.shutdown();
+
+}
+
+```
+
+`异步同步的好处`
+
+`尽可能地多占用系统资源，提供快速运算`
+
+`可以监控线程执行的情况，比如是否执行完毕、是否有返回值、时候有异常`
+
+
+
+### 建议125 优先选择线程池
+
+
+
+```java
+public static void main(String[] args) {
+	// 2个线程的线程池
+	ExecutorService ex = Executors.newFixedThreadPool(2);
+	// 多次执行线程体
+	for (int i = 0; i < 6; i++) {
+		ex.submit(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println(Thread.currentThread().getName());
+			}
+		});
+	}
+	// 关闭执行器
+	ex.shutdown();
+}
+```
+
+`线程池涉及的3个名词`
+
+```xml
+<!--
+	1)工作线程(worker)
+	线程池中的线程，只有2个状态：可运行状态和等待状态，在没有任务
+时他们处于等待状态，运行时可以循环地执行任务
+	
+	2)任务接口(Task)
+	这是每个任务必须实现的接口，以供工作线程调度器调度，它规定了
+任务的入口、任务执行完的场景处理、任务的执行状态等。
+	
+	3)任务队列(wok queue)
+	也叫做工作队列，用于存放等待处理的任务
+-->
+```
+
+
+
+```java
+ public static ExecutorService newFixedThreadPool(int nThreads) {
+    //生成一个最大为nThreads 的线程执行器
+        return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue<Runnable>());
+ }
+//此处使用了 LinkedBlockingQueue 作为任务队列管理器，所有等待处
+//理的任务都会放在该队列中，次队列是一个阻塞式的单端队列。线程池建
+//立好，线程运行是在submit 第一次提交任务时建立的。
+```
+
+
+
+```java
+
+
+```
+
+
+
+### 建议126 适时选择不同的线程池来实现
+
+`Java的线程池从最根本来说只有2个：ThreadPoolExecutor类和ScheduledThreadPoolExecutor类，java为了简化并行计算，还提供了一个Executors的静态类，可以直接生成多种不同的线程池执行器，但归根到底还是ThreadPoolExecutor类和ScheduledThreadPoolExecutor类。`
+
+##### ThreadPoolExecutor 构造函数
+
+```java
+public class ThreadPoolExecutor extends AbstractExecutorService {
+ultHandler);
+        public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) {
+            //检验输入条件
+        if (corePoolSize < 0 ||
+            maximumPoolSize <= 0 ||
+            maximumPoolSize < corePoolSize ||
+            keepAliveTime < 0)
+            throw new IllegalArgumentException();
+       	//检验运行环境
+            if (workQueue == null || threadFactory == null || handler == null)
+            throw new NullPointerException();
+        this.corePoolSize = corePoolSize;
+        this.maximumPoolSize = maximumPoolSize;
+        this.workQueue = workQueue;
+        this.keepAliveTime = unit.toNanos(keepAliveTime);
+        this.threadFactory = threadFactory;
+        this.handler = handler;
+    }
+
+    
+}
+
+```
+
+`上述构造函数参数`
+
+```xml
+<!--
+	corePoolSize:最小线程数(线程数量是逐步达到corePoolSize值
+的，例如，例如corePoolSize值是10，而任务只有5，线程池中最多有5个
+启动的线程，而不是一次性启动10个线程)
+
+
+maximumPoolSize：最大线程数(线程池中最大容纳的线程数量，如果超
+出，则使用RejectedExecutionHandler拒绝策略处理)
+
+	keepAliveTime:线程最大生命周期
+	
+	unit：时间单位
+	
+	workQueue：任务队列(当线程池中的线程出于运行状态，而此时任
+务数量继续增加，则需要一个容器来容纳这些任务，这就是任务队列)
+
+	threadFactory：线程工厂(定义如何启动一个线程，可以设置线程
+名称，并且可以确认是否是后台线程等)
+
+	handler：拒绝任务处理器
+-->
+```
+
+`Executors提供的几个创建线程池的方法`
+
+- newSingleThreadExecutor:单线程池
+
+```xml
+<!--
+	
+
+	只有一个线程在运行，该线程永不过时，而且由于一个线程，当有多
+个任务需要处理时，会将他们放到一个无阻塞队列中逐个处理。
+
+	
+
+-->
+```
+
+```java
+    public static ExecutorService newSingleThreadExecutor() {
+        return new FinalizableDelegatedExecutorService
+            (new ThreadPoolExecutor(1, 1,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue<Runnable>()));
+    }
+
+//使用如下
+private static void single() throws InterruptedException, ExecutionException {
+	ExecutorService es = Executors.newSingleThreadExecutor();
+
+	Future<String> future = es.submit(new Callable<String>() {
+
+		@Override
+		public String call() throws Exception {
+			return "thread";
+		}
+	});
+	//获得任务执行返回值
+	System.out.println(future.get());
+	//关闭执行器
+	es.shutdown();
+}
+```
+
+
+
+- newCachedThreadPool：缓存功能的线程池
+
+```java
+    public static ExecutorService newCachedThreadPool() {
+        return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                      60L, TimeUnit.SECONDS,
+                                      new SynchronousQueue<Runnable>());
+    }
+//线程队列使用了同步阻塞队列，这也就是向队列中加入一个元素，即可
+//唤醒一个线程来处理，这种队列没有队列深度的概念
+```
+
+
+
+- newFixedThreadPool：固定线程数量的线程池
+
+```java
+    public static ExecutorService newFixedThreadPool(int nThreads) {
+        return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue<Runnable>());
+    }
+//	在初始化时决定了线程最大数量，若任务添加的能力超出了线程处理
+//能力，则建立阻塞队列容纳多余的任务。
+//	如果任务增长速度快，超过了LinkedBlockingQueue最大容量，则按
+//照ThreadPoolExecutor默认的拒绝策略(直接丢弃)来处理
+```
+
+
+
+### 建议127 Lock与synchronized是不一样的
+
+`Lock类和synchronized关键字在代码块的并发和内存上是语义是一样的，都是保持代码块同时只有一个线程具有执行权。但是一个任务提交给多个线程运行，lock类和内部锁synchronized有不同`
+
+
+
+定义一个任务
+
+```java
+public class Task {
+	public void doSomething() {
+		try {
+			// 等待 2秒 ，此时的线程转为WAITING状态
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		StringBuffer sbBuffer = new StringBuffer();
+		sbBuffer.append("线程名称：" + Thread.currentThread().getName());
+		// 运行时间戳
+		sbBuffer.append("，执行时间：" + Calendar.getInstance().get(13) + "s");
+		System.out.println(sbBuffer);
+	}
+}
+//模拟了一个执行时间比较长的计算，在使用sleep方法时线程的状态会从运行状态转变为等待状态。
+```
+
+显示锁任务
+
+```java
+public class TaskWithLock extends Task implements Runnable {
+
+	// 声明显示锁
+	private final Lock lock = new ReentrantLock();
+
+	@Override
+	public void run() {
+
+		try {
+			// 开始锁定
+			lock.lock();
+			doSomething();
+		} finally {
+			lock.unlock();
+		}
+	}
+}
+//需要说明的是，显示锁的锁定和释放必须在一个try ....finally块
+//中，这是为了确保即使运行期异常也能正常释放锁，保证其他线程能顺
+//利执行
+```
+
+内部锁任务
+
+```java
+public class TaskWithSync extends Task implements Runnable {
+	@Override
+	public void run() {
+		// 内部锁
+		synchronized ("A") {
+			doSomething();
+		}
+	}
+}
+
+```
+
+模拟场景运行上面
+
+```java
+public class Client127 {
+	public static void main(String[] args) throws Exception {
+		runTasks(TaskWithLock.class);
+		runTasks(TaskWithSync.class);
+
+	}
+
+	static void runTasks(Class<? extends Runnable> clz) throws Exception {
+		ExecutorService es = Executors.newCachedThreadPool();
+
+		System.out.println("开始执行" + clz.getSimpleName() + " 任务名称");
+		// 启动三个线程
+		for (int i = 0; i < 3; i++) {
+			es.submit(clz.newInstance());
+		}
+		// 等待足够长的时间 然后关闭执行器
+		TimeUnit.SECONDS.sleep(10);
+		System.out.println("***" + clz.getSimpleName() + "任务执行完毕***\n");
+
+		es.shutdown();
+
+	}
+}
+```
+
+
+
+
+
+```xml
+<!--
+执行结果
+
+开始执行TaskWithLock 任务名称
+线程名称：pool-1-thread-2，执行时间：14s
+线程名称：pool-1-thread-1，执行时间：14s
+线程名称：pool-1-thread-3，执行时间：14s
+***TaskWithLock任务执行完毕***
+
+开始执行TaskWithSync 任务名称
+线程名称：pool-2-thread-1，执行时间：24s
+线程名称：pool-2-thread-3，执行时间：26s
+线程名称：pool-2-thread-2，执行时间：28s
+***TaskWithSync任务执行完毕***
+-->
+
+
+
+
+<!--
+	显示锁是同时运行的。显然在pool-1-thread-2线程在运行sleep
+时，其他两个线程也运行到这里，一起等待，然后一起输出，这不符合线
+程互斥概念
+
+	内部锁，按照事我们预期的结果。
+
+
+	问题：Lock锁为什么不出现互斥情况？
+	对于同步资源来说(示例中的代码块)，显示锁是对象级别的锁，而
+内部锁类级别的锁，(Lock是跟随对象的，synchronized锁是跟随类
+的)。简单的说Lock定义为所有多线程的私有属性是起不到资源互斥作用
+的，除非Lock定义为所有线程共享变量。下面代码是一个lock锁资源的
+代码
+
+-->
+```
+
+一个lock锁资源的代码
+
+```java
+	private static void lockTask() {
+		// 多个线程共享
+		final Lock lock = new ReentrantLock();
+		// 启动3个线程
+		for (int i = 0; i < 3; i++) {
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						lock.lock();
+						Thread.sleep(2000);
+						System.out.println(Thread.currentThread().getName());
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} finally {
+						lock.unlock();
+					}
+				}
+			}).start();
+		}
+	}
+//结果
+//Thread-1
+//Thread-2
+//Thread-0
+实现了一个线程在执行，其他线程处于等待状态
+
+
+```
+
+
+
+#### 显示锁和内部锁的不同(4点不同)
+
+##### 1：Lock支持更细粒度的锁控制
+
+
+
+```xml
+<!--
+	假设读写锁分离，写操作时不允许读写操作存在，儿读操作时读写可
+以并发执行。这一点内部锁难以实现
+-->
+```
+
+```java
+public class Foo {
+	// 可重入的读写锁
+	private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+
+	// 读锁
+	private final Lock rLock = rwl.readLock();
+
+	// 写锁
+	private final Lock wLock = rwl.writeLock();
+
+	// 多操作，并发执行
+	public void read() {
+		try {
+			rLock.lock();
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			rLock.unlock();
+		}
+	}
+
+	// 写操作，同时只允许一个写操作
+	public void write(Object obj) {
+		try {
+			wLock.lock();
+			Thread.sleep(2000);
+			System.out.println("Foo.write()");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			wLock.unlock();
+		}
+
+	}
+}
+```
+
+```xml
+<!--
+	读写锁允许同时有多个读操作但只允许有一个写操作，也就是当有一
+个写线程在执行是，所有的读写线程都会阻塞，直到写线程释放锁资源为
+止，而读锁可以有多个线程同时执行。
+
+-->
+```
+
+
+
+##### 2：Lock是无阻塞锁，synchronized是阻塞锁
+
+```xml
+<!--
+	当线程A持有锁时，线程B也期望获得锁，此时，如果程序中使用的是
+显示锁，则B线程为等待状态，若使用的是内部锁则为阻塞状态。
+-->
+```
+
+
+
+##### 3：Lock可以公平锁，synchronized只能是非公平锁
+
+```xml
+<!--
+	当一个线程A持有锁，而线程B、C出于阻塞或者等待状态时，若线程A
+释放锁，JVM从线程B、C中随机选择一个线程持有锁并使其获得执行权，这
+就是非公平锁。若JVM选择了等待时间最长的一个线程持有锁，则为公平锁
+。
+	显示锁默认是非公平锁，但是可以在构造函数加入参数true来申明
+为公平锁。
+-->
+
+```
+
+
+
+##### 4： Lock是代码级的，synchronized是JVM级的
+
+
+
+
+
+### 建议128 预防线程死锁
+
+
+
+
+
+#### 达到死锁的4个条件
+
+```xml
+<!--
+	1）互斥：一个资源每次只能被一个线程使用。
+	2）资源独占：一个线程因请求资源阻塞时，对已获得的资源保存不
+放
+	3）不剥夺：线程以获得的 资源在未使用完之前，不能进行剥夺
+	4）循环等待条件：若干线程之间形成一种头尾相接的循环等待资源
+关系
+-->
+
+```
+
+
+
+
+
+### 建议129 适当设置阻塞队列长度
+
+`阻塞队列BlockingQueue扩展了Queue、Collection接口,对元素的插入和提取使用了阻塞处理，Collection实现了长度自行管理`
+
+```java
+public static void main(String[] args) {
+
+	BlockingQueue<String> blockingQueue = new ArrayBlockingQueue<String>(5);
+
+	for (int i = 0; i < 10; i++) {
+		blockingQueue.add("");
+		// Exception in thread "main" java.lang.IllegalStateException: Queue
+		// full
+	}
+
+}
+//BlockingQueue不能自动扩展长度
+```
+
+`阻塞队列和非阻塞队列一个重要区别：阻塞队列容量是固定的，非阻塞队列是变长的`
+
+
+
+
+
+### 建议130 使用CountDownLatch协调子线程
+
+
+
+
+
+### 建议131 CyclicBarrier让多线程齐步走
+
+
+
+
+
+## 第10章 性能和效率
+
+### 建议132 提升Java性能的基本方法
+
+
+
+- 不要在循环条件中计算
+- 尽可能把变量、方法声明为final static 类型
+- 缩小变量的作用范围(目的是加速GC回收)
+- 频繁字符串操作使用stringBuilder或StringBuffer
+- 使用非线性检索
+- 不要建立冗余对象
+
+
+
+### 建议133 若非必要，不要克隆对象
+
+`clone方式只是一个冷僻的生成对象方式，并非主流，主要用于构造函数复杂，对象属性比较多，通过new关键字创建一个对象比较耗时的时候`
+
+
+
+### 建议134 推荐使用“望闻问切”的方式诊断性能
+
+
+
+### 建议135 必须定义性能衡量标准
+
+
+
+
+
+### 建议136 强打出头鸟——解决首要系统性能问题
+
+
+
+### 建议137 调整JVM参数以提升性能
+
+
+
+### 建议138 性能是个大“咕咚”
+
+
+
+
+
+## 第11章 开源世界
+
+### 建议139 大胆采用开源工具
+
+
+
+
+
+### 建议140 推荐使用Guava扩展工具包
+
+
+
+- Collections（主要包括：不可变集合、多值Map、Table表和集合工具类）
+
+```java
+public static void main(String[] args) {
+	// 不可变集合
+	ImmutableList<String> list = ImmutableList.of("A", "B", "C");
+
+	// 不可变Map
+	ImmutableMap<Integer, String> map = ImmutableMap.of(1, "A", 2, "B", 3, "C");
+
+	// 多值Map
+	ArrayListMultimap<Object, Object> arrayListMultimap = ArrayListMultimap.create();
+
+	arrayListMultimap.put("name", "grq");
+	arrayListMultimap.put("name", "lifeng");
+	System.out.println(arrayListMultimap);
+
+	// table
+	Table<Double, Double, String> g = HashBasedTable.create();
+
+	g.put(31.23, 121.38, "人民广场");
+	System.out.println(g);
+
+	// 类似于数据库表的存储方式
+	Table<Integer, Integer, String> user = HashBasedTable.create();
+	user.put(1, 1, "grq");
+	user.put(1, 2, "sunjie");
+	String string = user.get(1, 2);
+	System.out.println(string);
+
+	// Map操作
+	HashMap<String, Integer> useMap = new HashMap();
+	useMap.put("grq", 25);
+	useMap.put("sunjie", 24);
+	useMap.put("dou", 22);
+
+	// 所有年龄大于22的人
+	Predicate valuePredicate;
+	Map<String, Integer> filterValues = Maps.filterValues(useMap, new Predicate<Integer>() {
+
+		@Override
+		public boolean apply(Integer input) {
+			return input > 22;
+		}
+	});
+
+	System.out.println(filterValues);
+
+	// 基本类型工具
+	/**
+	 * 基本类型工具是以基本类型+s的方式命名的，只是针对基本类型 ，不是针对包装类型
+	 */
+
+	int[] insts ={1,23,5,5,88,21,43}; 
+	//最大值
+	System.out.println(Ints.max(insts));
+}
+```
+
+
+
+### 建议141 Apache扩展包
+
+`Apache Commons通用扩展包基本上都会使用，一般情况下lang包作为JDK的基础语言扩展包，collections作用是集合扩展`
+

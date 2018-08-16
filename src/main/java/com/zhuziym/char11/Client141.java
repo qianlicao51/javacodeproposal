@@ -15,7 +15,7 @@ import com.zhuziym.char03.clone.Pserson;
  * @version 创建时间：2018年8月15日 下午5:11:19
  *
  */
-public class Clinet141 {
+public class Client141 {
 	public static void main(String[] args) {
 		// 判断是否为空
 		StringUtils.isEmpty("");

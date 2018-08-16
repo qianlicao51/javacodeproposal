@@ -2792,3 +2792,18 @@ public class Person {
 -->
 ```
 
+
+
+### 建议143 可以选择多种Collections扩展
+
+`下面简单介绍3个有个性的Collections扩展工具包`
+
+- FastUtil
+
+`fastutil主要提供2种功能：一种是限定键值类型的Map、List、Set，另一种是大容量的集合`
+
+```xml
+
+
+```
+

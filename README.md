@@ -2723,3 +2723,72 @@ public static void main(String[] args) {
 
 `Apache Commons通用扩展包基本上都会使用，一般情况下lang包作为JDK的基础语言扩展包，collections作用是集合扩展`
 
+```java
+public static void main(String[] args) {
+	// 判断是否为空
+	StringUtils.isEmpty("");
+	// 是否是数字
+	StringUtils.isNumeric("12");
+	// 统计子字符串出现的次数
+	StringUtils.countMatches("abcd", "a");
+	// 转义XML标示
+	StringEscapeUtils.escapeXml("<project xmlns=http://maven.apache.org/POM/4.0.0 xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xsi:schemaLocation");
+	// 随机生成长度为6的ASCII字符串
+	String randomAscii = RandomStringUtils.randomAscii(6);
+	WordUtils.capitalize("abc bcd");
+
+	// Object
+	Person person = new Person();
+	person.setAge(12);
+	person.setName("grq");
+	System.out.println(person);
+
+}
+
+```
+
+```java
+public class Person {
+
+	private String name;
+	private int age;
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("姓名", name).append("年龄", age).toString();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this || obj.getClass() == getClass()) {
+			return true;
+		}
+
+		Person p = (Person) obj;
+		//姓名相同 认为两个对象相同
+		return new EqualsBuilder().appendSuper(super.equals(obj))
+				.append(name, p.name).isEquals();
+	}
+}
+```
+
+
+
+### 建议142 推荐使用Joda日期时间扩展包
+
+
+
+```xml
+<!--
+
+	需要注意的是，DateTime是一个不可变类型，与String非常类似，
+即使是plusXXX、minusXXX等操作，DateTime对象仍然不会变，只是新生
+成一个DateTime对象。
+	但是，Joda也提供了一个可变类型的日期对象：MutableDateTime
+类，这样，日期操作更加方便了。
+-->
+```
+

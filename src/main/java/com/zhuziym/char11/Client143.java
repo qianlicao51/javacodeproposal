@@ -18,11 +18,10 @@ import java.util.Map;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-
-import com.zhuziym.char03.clone.Pserson;
 
 import ch.lambdaj.Lambda;
+
+import com.zhuziym.char03.clone.Pserson;
 
 /**
  * @Title: Client143.java
@@ -34,7 +33,7 @@ import ch.lambdaj.Lambda;
  */
 public class Client143 {
 	public static void main(String[] args) {
-		// fastUtil();
+		fastUtil();
 		trove();
 		LambdaUtil();
 	}

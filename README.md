@@ -2800,10 +2800,146 @@ public class Person {
 
 - FastUtil
 
-`fastutil主要提供2种功能：一种是限定键值类型的Map、List、Set，另一种是大容量的集合`
+`fastutil主要提供2种功能：一种是限定键值类型的Map、List、Set，另一种是大容量的集合(一个Coolection最大容量是Integer的最大值，fastutil提供的Big系列的集合，最大容量是Long的最大值，但是在使用时需要考虑内存溢出问题，调节JAVA的mx参数)`
+
+```java
+private static void fastUtil() {
+
+	// 明确键类型的Map
+	Int2ObjectMap<String> map = new Int2ObjectOpenHashMap<String>();
+	map.put(100, "grq");
+	// java.lang.OutOfMemoryError
+	BigList<String> bigList = new ObjectBigArrayBigList<String>(1L + Integer.MAX_VALUE);
+
+	// 基本类型的集合，不再使用Intreger包装类型
+	IntArrayList intArrayList = new IntArrayList();
+}
+
+```
+
+
+
+- trove
+
+`trove提供了一个快速，高效，低内存消耗的Collection集合，并且还提供了过滤和拦截功能，同时还提供了基本类型的集合`
+
+
+
+```java
+private static void trove() {
+	TIntArrayList intArrayList = new TIntArrayList();
+	// 每个元素乘以2
+	intArrayList.transformValues(new TIntFunction() {
+		@Override
+		public int execute(int value) {
+			return value * 2;
+		}
+	});
+	// 过滤大于200的元素
+	intArrayList.grep(new TIntProcedure() {
+		@Override
+		public boolean execute(int value) {
+			return value > 200;
+		}
+	});
+
+	// 包装为JDK的list
+	List<Integer> jdkList = new TIntListDecorator(intArrayList);
+
+	// 键类型确定Map
+	TIntObjectMap<String> map = new TIntObjectHashMap<String>();
+
+}
+```
+
+`trove最大优势在高性能上，在一般的增加、修改、删除操作时，trove响应时间比JDK提供的集合少一个数量级，比fastutil也高很多。因此，高性能项目要考虑trove`
+
+
+
+- lambdaj
+
+`是一个纯净的集合操作工具，不提供任何集合扩展，只是提供集合操作，比如查询、过滤、统一初始化等，特别是他的查询，非常类似于DBRMS上的SQL语句，也提供求和，求平均值等方法`
+
+```java
+private static void LambdaUtil() {
+	List<Integer> list = new ArrayList<Integer>();
+
+	// 计算平均值
+	Lambda.avg(list);
+
+	// 统计每个元素出现的次数，返回一个Map
+	Map<Object, Integer> count = Lambda.count(list);
+
+	// 按照年龄排序
+	List<Person> perList = new ArrayList<Person>();
+	perList.add(new Person("clhang", 24));
+	perList.add(new Person("dou", 26));
+	perList.add(new Person("agrq", 23));
+	perList.add(new Person("bsunjie", 22));
+
+	// 按照顺序排序 ()
+	List<Pserson> sort = Lambda.sort(perList, Lambda.on(Person.class).getName());
+	System.out.println(sort);
+
+	// 串联所有元素指定属性，结果为 clhang, dou, agrq, bsunjie
+	String name = Lambda.joinFrom(perList).getName();
+
+	// 过滤年龄大于20的元素
+	List<Person> select = Lambda.select(perList, new BaseMatcher<Pserson>() {
+		@Override
+		public boolean matches(Object _o) {
+			Person p = (Person) _o;
+			return p.getAge() > 23;
+		}
+
+		@Override
+		public void describeTo(Description arg0) {
+		}
+	});
+
+	// 查找出最大年龄
+	int age = Lambda.maxFrom(perList).getAge();
+
+	// 抽取出所有姓名组成一个数组 #[clhang, dou, agrq, bsunjie]
+	List<String> extract = Lambda.extract(perList, Lambda.on(Person.class).getName());
+
+	boolean exists = Lambda.exists(perList, new BaseMatcher<Person>() {
+
+		@Override
+		public boolean matches(Object item) {
+			Person p = (Person) item;
+			return p.getName().equals("agrq");
+		}
+
+		@Override
+		public void describeTo(Description arg0) {
+		}
+	});
+	System.out.println(exists);
+}
+
+```
+
+
+
+maven
 
 ```xml
-
-
+<!-- collection扩展包 -->
+<dependency>
+	<groupId>it.unimi.dsi</groupId>
+	<artifactId>fastutil</artifactId>
+	<version>8.1.1</version>
+</dependency>
+<dependency>
+	<groupId>net.sf.trove4j</groupId>
+	<artifactId>trove4j</artifactId>
+	<version>3.0.3</version>
+</dependency>
+<dependency>
+	<groupId>com.googlecode.lambdaj</groupId>
+	<artifactId>lambdaj</artifactId>
+	<version>2.3.3</version>
+</dependency>
 ```
 
